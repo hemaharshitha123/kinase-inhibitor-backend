@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Kinase Inhibitor Database</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #eef7fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        h2 { color: #00796b; margin-bottom: 20px; }
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #00796b; border-radius: 5px;
+        }
+        button {
+            width: 100%; padding: 12px; background: #00796b; color: white; border: none; border-radius: 5px; cursor: pointer;
+        }
+        button:hover { background: #005f56; }
+        .error { color: red; margin-top: 10px; }
+        a { display: block; margin-top: 15px; color: #00796b; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Sign In</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="error" class="error"></p>
+        <a href="signup.html">Don't have an account? Sign Up</a>
+    </div>
+
+<script>
+function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    fetch('http://localhost:3002/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Login successful!');
+            window.location.href = 'index.html'; // Redirect to main page
+        } else {
+            document.getElementById('error').innerText = 'Login failed. Check your credentials.';
+        }
+    })
+    .catch(() => {
+        document.getElementById('error').innerText = 'Could not connect to server.';
+    });
+}
+</script>
+</body>
+</html>

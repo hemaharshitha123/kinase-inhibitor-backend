@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kinase Inhibitor Database</title>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #eef7fa; text-align: center; padding: 20px; }
+        h1 { color: #00796b; }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            border: 2px solid #00796b;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #005f56; }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 95%;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #00796b;
+            text-align: center;
+        }
+        th {
+            background: #00796b;
+            color: white;
+        }
+        .error { color: red; margin-top: 10px; }
+        a { margin: 10px; color: #00796b; text-decoration: none; }
+        h2 { color: #00796b; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <h1>Kinase Inhibitor Database</h1>
+    <input type="text" id="searchQuery" placeholder="Search compound name">
+    <button onclick="searchData()">Search</button>
+    <p id="error" class="error"></p>
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>ChEMBL ID</th>
+                <th>Compound Name</th>
+                <th>Chemical Structure</th>
+                <th>Target ChEMBL ID</th>
+                <th>Target Name</th>
+                <th>Assay Description</th>
+                <th>Bioactivity Type</th>
+                <th>Bioactivity Value</th>
+                <th>Bioactivity Units</th>
+                <th>Organism</th>
+                <th>DrugBank ID</th>
+                <th>Chemical Formula</th>
+                <th>Target Class</th>
+                <th>Binding Affinity (nM)</th>
+                <th>LogP</th>
+                <th>Mechanism of Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <a href="login.html">Login</a> | <a href="signup.html">Sign Up</a>
+
+    <h2>3D Structure Viewer</h2>
+    <input type="text" id="smilesInput" placeholder="Enter SMILES string">
+    <button onclick="render3D()">Render Molecule</button>
+    <div id="viewer3d" style="width: 500px; height: 400px; margin: 20px auto; border: 1px solid #00796b;"></div>
+
+    <script>
+    function searchData() {
+        const query = document.getElementById('searchQuery').value;
+        fetch(`http://localhost:3002/search?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#resultsTable tbody');
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    document.getElementById('error').innerText = 'No results found.';
+                    return;
+                }
+                document.getElementById('error').innerText = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row['ChEMBL ID']}</td>
+                        <td>${row['Compound Name']}</td>
+                        <td>${row['Chemical Structure']}</td>
+                        <td>${row['Target ChEMBL ID']}</td>
+                        <td>${row['Target Name']}</td>
+                        <td>${row['Assay Description']}</td>
+                        <td>${row['Bioactivity Type']}</td>
+                        <td>${row['Bioactivity Value']}</td>
+                        <td>${row['Bioactivity Units']}</td>
+                        <td>${row['Organism']}</td>
+                        <td>${row['DrugBank ID']}</td>
+                        <td>${row['Chemical Formula']}</td>
+                        <td>${row['Target Class']}</td>
+                        <td>${row['Binding Affinity (nM)']}</td>
+                        <td>${row['LogP']}</td>
+                        <td>${row['Mechanism of Action']}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }).catch(err => {
+                document.getElementById('error').innerText = 'Could not connect to server.';
+            });
+    }
+
+    function render3D() {
+        const smiles = document.getElementById('smilesInput').value;
+        const viewer = $3Dmol.createViewer("viewer3d", { backgroundColor: "white" });
+        viewer.clear();
+        fetch(`https://cactus.nci.nih.gov/chemical/structure/${encodeURIComponent(smiles)}/file?format=mol`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch 3D structure.');
+                return response.text();
+            })
+            .then(molData => {
+                viewer.addModel(molData, "mol");
+                viewer.setStyle({}, { stick: { radius: 0.2 }, sphere: { scale: 0.3 } });
+                viewer.zoomTo();
+                viewer.render();
+            })
+            .catch(err => {
+                alert('Error fetching structure. Please check the SMILES or try another.');
+            });
+    }
+    </script>
+</body>
+</html>
